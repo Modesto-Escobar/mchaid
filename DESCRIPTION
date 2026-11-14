@@ -1,0 +1,27 @@
+Package: mchaid
+Type: Package
+Title: Chi-Square and F Automatic Interaction Detection (CHAID, AID) Trees
+Version: 0.9.4
+Date: 2026-11-14
+Authors@R: person("Modesto", "Escobar", email = "modesto@usal.es", role = c("aut", "cre"))
+Description: Grows CHAID decision trees (Kass, 1980) for a categorical or
+    ordinal response, and the equivalent trees with F tests for a
+    quantitative response, with ordered and unordered categorical predictors,
+    including exhaustive CHAID (Biggs, de Ville and Suen, 1991), a floating
+    category for missing values, frequency weights and Bonferroni-adjusted
+    splitting tests. The tests are likelihood-ratio tests computed from
+    cross-tabulations, so no package other than those distributed with R is
+    needed. The package is a port of the Stata commands 'mchaid' and 'maid',
+    which are based on the Stata command 'chaid' by Joseph N. Luchman. It
+    provides print, summary, plot (tree drawn with base graphics, in two styles: the
+    classic one and one with a box for every node, with bars or box plots), predict,
+    a classification table, a permutation importance of the predictors, a
+    conversion of the tree to a network of the 'netCoin' package and an
+    interactive version of the tree as an HTML page.
+License: GPL-3
+URL: https://github.com/Modesto-Escobar/mchaid
+BugReports: https://github.com/Modesto-Escobar/mchaid/issues
+Encoding: UTF-8
+Depends: R (>= 3.6.0)
+Imports: stats, graphics, grDevices, utils
+Suggests: jsonlite, netCoin
