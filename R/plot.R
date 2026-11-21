@@ -427,7 +427,23 @@
   for (bx in g$boxes) graphics::rect(bx[1], bx[2], bx[3], bx[4], border = "grey50", lwd = lw(0.8))
 }
 
+# can the current device write the dagger that marks the forced splits of the classic graph of mchaid? Devices with a
+# single-byte encoding (pdf() on Linux and macOS, ISOLatin1) fail with an error, or a warning, for characters they do not have
+.dagger_ok <- function() {
+  tryCatch({
+    w <- graphics::strwidth("\u2020")
+    is.finite(w) && w > 0
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+}
+
 .tree_draw_texts <- function(texts, cexh) {
+  hasdag <- any(vapply(texts, function(t) any(grepl("\u2020", t$lab, fixed = TRUE)), NA))
+  if (hasdag && !.dagger_ok()) {                               # the dagger becomes a "+" (the asterisk is already the mark of the modal category)
+    texts <- lapply(texts, function(t) {
+      t$lab <- gsub("\u2020", "+", t$lab, fixed = TRUE)
+      t
+    })
+  }
   for (t in texts) {
     nl <- length(t$lab)
     h <- cexh(t$h)

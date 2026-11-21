@@ -88,6 +88,15 @@ test_that("the forced splits are drawn in every language and style", {
   })
 })
 
+test_that("the classic graph replaces the dagger on devices that cannot write it", {
+  ## a single-byte encoding without the dagger, as pdf() has on some systems
+  grDevices::pdf(NULL, encoding = "KOI8-R.enc")
+  on.exit(grDevices::dev.off())
+  graphics::plot.new()
+  expect_false(mchaid:::.dagger_ok())
+  expect_warning(expect_error(plot(f2l), NA), NA)
+})
+
 test_that("the forced splits reach the data of the interactive tree", {
   skip_if_not_installed("jsonlite")
   dh <- mchaid:::.tree_data(f2l)
