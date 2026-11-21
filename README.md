@@ -1,5 +1,7 @@
 # mchaid
 
+[![R-CMD-check](https://github.com/Modesto-Escobar/mchaid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Modesto-Escobar/mchaid/actions/workflows/R-CMD-check.yaml)
+
 CHAID and AID decision trees for R: Chi-square Automatic Interaction Detection (Kass, 1980) for a categorical or
 ordinal response and, with F tests, for a quantitative one. `mchaid` is a port to R of the Stata commands
 `mchaid` (version 2.3, categorical response) and `maid` (quantitative response), which are based on the Stata

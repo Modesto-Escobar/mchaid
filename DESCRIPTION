@@ -24,4 +24,5 @@ BugReports: https://github.com/Modesto-Escobar/mchaid/issues
 Encoding: UTF-8
 Depends: R (>= 3.6.0)
 Imports: stats, graphics, grDevices, utils
-Suggests: jsonlite, netCoin
+Suggests: jsonlite, netCoin, testthat (>= 3.0.0)
+Config/testthat/edition: 3
