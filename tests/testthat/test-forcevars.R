@@ -88,13 +88,14 @@ test_that("the forced splits are drawn in every language and style", {
   })
 })
 
-test_that("the classic graph replaces the dagger on devices that cannot write it", {
-  ## a single-byte encoding without the dagger, as pdf() has on some systems
-  grDevices::pdf(NULL, encoding = "KOI8-R.enc")
-  on.exit(grDevices::dev.off())
-  graphics::plot.new()
-  expect_false(mchaid:::.dagger_ok())
-  expect_warning(expect_error(plot(f2l), NA), NA)
+test_that("the classic graph draws a + when the device cannot write the dagger", {
+  ## the check of the device depends on the platform (pdf() on Linux and macOS has no dagger): simulate that it fails
+  with_pdf({
+    graphics::plot.new()
+    expect_type(mchaid:::.dagger_ok(), "logical")
+  })
+  testthat::local_mocked_bindings(.dagger_ok = function() FALSE)
+  with_pdf(expect_warning(expect_error(plot(f2l), NA), NA))
 })
 
 test_that("the forced splits reach the data of the interactive tree", {
