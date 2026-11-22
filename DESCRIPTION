@@ -1,7 +1,7 @@
 Package: mchaid
 Type: Package
 Title: Chi-Square and F Automatic Interaction Detection (CHAID, AID) Trees
-Version: 0.10.0
+Version: 0.9.5
 Date: 2026-11-22
 Authors@R: person("Modesto", "Escobar", email = "modesto@usal.es", role = c("aut", "cre"))
 Description: Grows CHAID decision trees (Kass, 1980) for a categorical or

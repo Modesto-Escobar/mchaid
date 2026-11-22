@@ -1,4 +1,4 @@
-# mchaid 0.10.0
+# mchaid 0.9.5
 
 * `plot.mchaid()` and `plot.maid()` draw by default the style of boxes (`treestyle = "boxes"`, as `tree_html()` already
   did); the classic graph is `treestyle = "classic"`. **This changes the default graph.** In the boxes style
