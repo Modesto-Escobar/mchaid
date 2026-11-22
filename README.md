@@ -26,8 +26,11 @@ fit <- mchaid(Survived ~ Class + Sex + Age, data = tt, weights = Freq, minnode =
 
 fit                                   # nodes, modal category, risk
 summary(fit, definitions = TRUE)      # response by node, risk, chi-square and Cramer's V
-plot(fit, language = "es")            # the tree (returns its natural size in inches, invisibly)
-plot(fit, treestyle = "boxes")        # style of boxes: every node with its plot, the test of each split and "Pred.:"
+plot(fit, language = "es")            # the tree, in boxes: every node with its plot, the test of each split and "Pred.:"
+                                      # (returns its natural size in inches, invisibly)
+plot(fit, treestyle = "classic")      # the classic graph (the default until version 0.9.4)
+plot(fit, note = "Source: ...")       # a note at the bottom left of the graph
+plot(fit, dir = "my_tree")            # the graph and, after it, the interactive page of the same tree
 classification(fit, positive = "Yes") # classification table, sensitivity, precision, F1...
 predict(fit, newdata, type = "class") # "node", "class" or "prob"
 importance(fit)                       # permutation importance
@@ -37,8 +40,8 @@ tree_html(fit, dir = "my_tree")       # interactive tree as a self-contained HTM
 # quantitative response (maid): F tests
 fm <- maid(wage ~ occupation + industry + grade, data, unordered = c("occupation", "industry"),
            ordered = "grade", xtile = c(tenure = 4), minnode = 30, minsplit = 60)
-fm; summary(fm); plot(fm, quartiles = TRUE); predict(fm, newdata, type = "mean")
-plot(fm, treestyle = "boxes", nodeplot = "both")   # box plot and bar of the mean in every node
+fm; summary(fm); plot(fm, treestyle = "classic", quartiles = TRUE); predict(fm, newdata, type = "mean")
+plot(fm, nodeplot = "both")           # box plot and bar of the mean in every node
 asnetCoin(fm)                         # same, coloured by the mean of the node
 ```
 
@@ -58,7 +61,8 @@ frequency weights, Bonferroni-adjusted splitting tests, `forcevars` to choose th
 | `minnode() minsplit() maxbranch() mergalpha() spltalpha()` | the same arguments |
 | `missing`, `dvordered`, `noadj`, `exhaust`, `ordtable`, `norenumber`, `steps` | `missing`, `dvordered`, `adj = FALSE`, `exhaust`, `ordtable`, `renumber = FALSE`, `steps` |
 | `branches`, `definitions` | `summary(fit, branches = TRUE, definitions = TRUE)` |
-| `nopval`, `pcut()`, `language()`, `quartiles()`, `nopct` | `plot(fit, pval = FALSE, pcut =, language =, quartiles =, pct = FALSE)` |
+| `nopval`, `pcut()`, `language()`, `quartiles()`, `nopct` | `plot(fit, pval = FALSE, pcut =, language =, quartiles =, pct = FALSE)` (`quartiles` only with `treestyle = "classic"`) |
+| (the classic graph is the default) | `plot(fit, treestyle = "classic")`: in R the default is `treestyle = "boxes"` |
 | `treestyle(boxes)`, `nodeplot()`, `center()`, `whisker()`, `noshade` | `plot(fit, treestyle = "boxes", nodeplot =, center =, whisker =, shade = FALSE)` (`center` only in `maid`) |
 | `predicted` and `_CHAID` | `predict(fit)` and `fit$node` |
 | `estat classification` | `classification(fit)` |

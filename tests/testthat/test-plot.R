@@ -1,9 +1,14 @@
-test_that("plot() draws the classic tree and returns its size", {
+test_that("plot() draws the boxes by default and the classic tree on request, and returns the size", {
   with_pdf({
     sz <- plot(fit)
     expect_true(all(sz > 0))
-    sz2 <- plot(fm, quartiles = "auto")
+    expect_identical(plot(fit), plot(fit, treestyle = "boxes"))
+    expect_false(isTRUE(all.equal(plot(fit), plot(fit, treestyle = "classic"))))
+    sz <- plot(fit, treestyle = "classic")
+    expect_true(all(sz > 0))
+    sz2 <- plot(fm, treestyle = "classic", quartiles = "auto")
     expect_true(all(sz2 > 0))
+    expect_error(plot(f5, treestyle = "classic"), NA)
     expect_error(plot(f5), NA)
   })
 })
@@ -33,10 +38,10 @@ test_that("plot() rejects wrong arguments and warns about the ones that are igno
     expect_error(plot(fit, treestyle = "boxes", nodehead = "x"))
     expect_error(plot(fit, treestyle = "boxes", nodeplot = "boxes"), "nodeplot", fixed = TRUE)
     expect_error(plot(fit, treestyle = "boxes", nodeplot = "box"))   # a box plot needs a quantitative or ordered response
-    w <- first_warning(plot(fit, nodehead = "category"))
+    w <- first_warning(plot(fit, treestyle = "classic", nodehead = "category"))
     expect_match(w, "nodehead", fixed = TRUE)
     expect_match(w, "boxes", fixed = TRUE)
-    w <- first_warning(plot(fm, nodeplot = "box", center = "mean"))
+    w <- first_warning(plot(fm, treestyle = "classic", nodeplot = "box", center = "mean"))
     expect_match(w, "nodeplot", fixed = TRUE)
     expect_match(w, "center", fixed = TRUE)
   })
@@ -49,7 +54,7 @@ test_that("the digits of the mean, median and SD are checked and used", {
     for (dg in c(0, 1, 3)) {
       expect_error({
         plot(fm, treestyle = "boxes", nodeplot = "both", digits = dg)
-        plot(fm, digits = dg)
+        plot(fm, treestyle = "classic", digits = dg)
       }, NA)
     }
   })
@@ -68,10 +73,10 @@ test_that("the colours reach the graphs", {
   cl <- c(Yes = "#00AA00", No = "#AA0000")
   with_pdf({
     expect_error({
-      plot(fit, col = cl)
+      plot(fit, treestyle = "classic", col = cl)
       plot(fit, treestyle = "boxes", col = cl)
       plot(fit, treestyle = "boxes", col = c("#AA0000", "#00AA00"), nodehead = "number")
-      plot(fit, palette = "Set 2")
+      plot(fit, treestyle = "classic", palette = "Set 2")
     }, NA)
     expect_error(plot(fit, col = "red"))
     expect_error(plot(fit, palette = "zzz"))
@@ -91,7 +96,7 @@ test_that("ramp draws shades of one colour", {
   with_pdf({
     expect_error({
       plot(fit, treestyle = "boxes", col = "forestgreen", ramp = TRUE)
-      plot(fit, col = "forestgreen", ramp = "reverse")
+      plot(fit, treestyle = "classic", col = "forestgreen", ramp = "reverse")
     }, NA)
   })
   skip_if_not_installed("jsonlite")
@@ -125,11 +130,81 @@ test_that("nodeplot = 'dots' is drawn for a quantitative response only", {
 
 test_that("the labels, not the codes, are drawn in the classic graphs", {
   with_pdf({
-    r1 <- plot(fl, language = "es", rootlabel = "depvar")
-    r2 <- plot(fc, pval = FALSE)
-    r3 <- plot(fc, quartiles = FALSE)
+    r1 <- plot(fl, treestyle = "classic", language = "es", rootlabel = "depvar")
+    r2 <- plot(fc, treestyle = "classic", pval = FALSE)
+    r3 <- plot(fc, treestyle = "classic", quartiles = FALSE)
   })
   expect_type(r1, "double")
   expect_type(r2, "double")
   expect_type(r3, "double")
+})
+
+test_that("quartiles are ignored, with a warning, in the boxes style", {
+  with_pdf({
+    w <- first_warning(plot(fm, quartiles = TRUE))
+    expect_match(w, "quartiles", fixed = TRUE)
+    expect_match(w, "classic", fixed = TRUE)
+    expect_identical(collect_warnings(plot(fm, quartiles = FALSE))$warnings, character())
+    expect_identical(collect_warnings(plot(fm, treestyle = "classic", quartiles = TRUE))$warnings, character())
+  })
+})
+
+test_that("the note makes room under the legend in every style and is checked", {
+  with_pdf({
+    for (obj in list(fit, fm, f2l)) for (st in c("boxes", "classic")) {
+      s0 <- plot(obj, treestyle = st)
+      s1 <- plot(obj, treestyle = st, note = "Source: the data")
+      s2 <- plot(obj, treestyle = st, note = c("Source: the data", "Second line
+and a third"))
+      expect_gt(s1[["height"]], s0[["height"]])
+      expect_gt(s2[["height"]], s1[["height"]])
+      expect_identical(plot(obj, treestyle = st, note = ""), s0)
+      expect_identical(plot(obj, treestyle = st, note = NULL), s0)
+    }
+    expect_gt(plot(fit, note = strrep("a very long note ", 12))[["width"]], plot(fit)[["width"]])
+    expect_error(plot(fit, note = 1), "note", fixed = TRUE)
+    expect_error(plot(fm, treestyle = "classic", note = NA_character_), "note", fixed = TRUE)
+  })
+})
+
+test_that("dir writes the interactive page after the graph, with the same arguments", {
+  skip_if_not_installed("jsonlite")
+  with_pdf({
+    d1 <- new_dir("plot_dir")
+    out <- capture.output(sz <- plot(fit, main = "Titanic", note = "Source: the data", dir = d1))
+    expect_match(out, "Interactive tree: ", fixed = TRUE)
+    expect_true(file.exists(file.path(d1, "index.html")))
+    expect_identical(attr(sz, "html"), file.path(d1, "index.html"))
+    expect_identical(as.numeric(sz), as.numeric(plot(fit, main = "Titanic", note = "Source: the data")))
+    page <- paste(readLines(file.path(d1, "index.html"), warn = FALSE, encoding = "UTF-8"), collapse = "")
+    expect_match(page, "Source: the data", fixed = TRUE)
+    expect_match(page, "Titanic", fixed = TRUE)
+    expect_null(attr(plot(fit), "html"))
+
+    ## the style and the options of the graph reach the page; no warning is given twice
+    d2 <- new_dir("plot_dir_classic")
+    w <- collect_warnings(capture.output(plot(fit, treestyle = "classic", nodeplot = "bar", collapse = 1, dir = d2)))$warnings
+    expect_length(w, 1L)
+    expect_match(readLines(file.path(d2, "index.html"), warn = FALSE, encoding = "UTF-8")[1L], "<!DOCTYPE", fixed = TRUE)
+    h <- jsonlite::fromJSON(sub("</script>.*", "", sub(".*id=\"data\">", "", paste(readLines(file.path(d2, "index.html"), warn = FALSE, encoding = "UTF-8"), collapse = ""))), simplifyVector = FALSE)
+    expect_identical(h$options$treestyle, "classic")
+    expect_identical(h$options$collapse, 1L)
+
+    d3 <- new_dir("plot_dir_maid")
+    capture.output(plot(fm, center = "median", digits = 2, maxdots = 50, language = "es", dir = d3))
+    h3 <- jsonlite::fromJSON(sub("</script>.*", "", sub(".*id=\"data\">", "", paste(readLines(file.path(d3, "index.html"), warn = FALSE, encoding = "UTF-8"), collapse = ""))), simplifyVector = FALSE)
+    expect_identical(h3$options$center, "median")
+    expect_identical(h3$options$language, "es")
+
+    expect_error(plot(fit, dir = 1), "dir", fixed = TRUE)
+    expect_error(plot(fit, dir = ""), "dir", fixed = TRUE)
+  })
+})
+
+test_that("a tree without splits writes no page", {
+  skip_if_not_installed("jsonlite")
+  one <- mchaid(Survived ~ Class, data = tt[tt$Class == "1st", ], weights = Freq, minnode = 5000, minsplit = 10000)
+  d1 <- new_dir("plot_dir_none")
+  with_pdf(expect_message(plot(one, dir = d1), "No splits"))
+  expect_false(dir.exists(d1))
 })

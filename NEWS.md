@@ -1,3 +1,19 @@
+# mchaid 0.10.0
+
+* `plot.mchaid()` and `plot.maid()` draw by default the style of boxes (`treestyle = "boxes"`, as `tree_html()` already
+  did); the classic graph is `treestyle = "classic"`. **This changes the default graph.** In the boxes style
+  `quartiles` has no effect and now says so with a warning (unless it is `FALSE`); the classic graph needs
+  `treestyle = "classic"` for it, as in `plot(fm, treestyle = "classic", quartiles = TRUE)`.
+* New argument `dir` in `plot.mchaid()` and `plot.maid()`: if it is given, the graph is drawn and, after it, the same
+  tree is written as the interactive page of `tree_html()` in that folder, with the same arguments (the path is
+  written, the page is opened in the browser in an interactive session, and the path is also in the attribute
+  `"html"` of the value). `collapse`, which only the page uses, is also an argument of `plot()`. A tree without
+  splits writes no page.
+* New argument `note` in `plot.mchaid()` and `plot.maid()`, as in `tree_html()`: text at the bottom left of the graph,
+  in the two styles (a new line, `"\n"`, starts a new line of the note). It is also written in the page with `dir`.
+* `center`, `digits` and `maxdots` stay only in `plot.maid()` and `tree_html()`: with `mchaid` there is no mean, no
+  decimals and no points to draw, so they would have no effect.
+
 # mchaid 0.9.4
 
 * Repository metadata: `URL` and `BugReports` in `DESCRIPTION`, and the credit to Joseph N. Luchman's Stata

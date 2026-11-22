@@ -51,6 +51,29 @@
 
 .tw <- function(h, nchar) 0.52 * h * nchar
 
+# lines of the 'note' of a graph (a text for the bottom left; "\n" starts a new line): character(0) if there is none
+.user_note <- function(note) {
+  if (is.null(note)) return(character(0))
+  if (!is.character(note) || anyNA(note)) stop("'note' must be a character string", call. = FALSE)
+  note <- paste(note, collapse = "\n")
+  if (!nzchar(trimws(note))) character(0) else strsplit(note, "\n", fixed = TRUE)[[1L]]
+}
+
+# room (inches) that the classic graph needs under the legend for the n lines of the note
+.note_room <- function(n) if (n) 0.04 + 0.16 * n else 0
+
+# plot(x, dir = ...): once the graph is drawn, the interactive page of the same tree. The graph has already checked the arguments and
+# given the warnings, so those of tree_html() would be the same ones again: they are muted. The path is written (and the page is
+# opened in the browser in an interactive session) as print() of the page does; the path of the page goes in the attribute "html" of the result.
+.plot_page <- function(size, x, dir, ...) {
+  if (is.null(dir)) return(invisible(size))
+  if (!is.character(dir) || length(dir) != 1L || is.na(dir) || !nzchar(dir)) stop("'dir' must be the name of a folder", call. = FALSE)
+  page <- suppressWarnings(tree_html(x, ..., dir = dir))
+  print(page)
+  attr(size, "html") <- page$file
+  invisible(size)
+}
+
 # dimensions of the layout of a tree, in inches (as in the Stata commands)
 .TREE <- list(dx = 1.15, hbox = 0.5, barh = 1.1, gapbar = 0.12, topm = 0.65, botm = 0.85,
               fn = 0.17, fnn = 0.125, fe = 0.14, fp = 0.125, ft = 0.28, fz = 0.12, fl = 0.15)
@@ -460,15 +483,19 @@
   }
 }
 
-plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, language = "en",
-                        quartiles = NULL, col = NULL, palette = "default", ramp = FALSE, treestyle = c("classic", "boxes"), nodeplot = NULL,
-                        whisker = c("p5", "minmax", "tukey"), shade = TRUE, cex = 1, nodehead = c("category", "number"), rootlabel = "total", ...) {
-  treestyle <- .match_opt(treestyle, c("classic", "boxes"), "treestyle")
+plot.mchaid <- function(x, main = NULL, note = NULL, pct = TRUE, pval = TRUE, pcut = NULL, language = "en",
+                        quartiles = NULL, col = NULL, palette = "default", ramp = FALSE, treestyle = c("boxes", "classic"), nodeplot = NULL,
+                        whisker = c("p5", "minmax", "tukey"), shade = TRUE, cex = 1, nodehead = c("category", "number"), rootlabel = "total",
+                        collapse = NULL, dir = NULL, ...) {
+  treestyle <- .match_opt(treestyle, c("boxes", "classic"), "treestyle")
   if (treestyle == "classic") {                               # arguments of the style of boxes that the classic style ignores
     ign <- c(if (!is.null(nodeplot)) "nodeplot", if (!missing(nodehead)) "nodehead", if (!missing(whisker)) "whisker")
     if (length(ign)) warning(paste(sQuote(ign, FALSE), collapse = ", "), if (length(ign) > 1L) " are" else " is", " ignored with treestyle = \"classic\": use treestyle = \"boxes\"", call. = FALSE)
-  }
+  } else if (!is.null(quartiles) && !isFALSE(quartiles)) warning("'quartiles' is ignored with treestyle = \"boxes\": use treestyle = \"classic\"", call. = FALSE)
   whisker <- .match_opt(whisker, c("p5", "minmax", "tukey"), "whisker")
+  unote <- .user_note(note)
+  main0 <- main                                               # the classic graph gives the title a default that the page does not take
+  col0 <- col
   col <- .resp_col(x, col, palette, language, ramp)               # colours of the categories of the response (checks 'col' and 'palette')
   if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || cex < 0.5 || cex > 3) stop("'cex' must be a number between 0.5 and 3")
   k <- x$N_clusters
@@ -476,10 +503,13 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
     message("No splits uncovered: there is no tree to draw.")
     return(invisible(NULL))
   }
+  page <- function(size) .plot_page(size, x, dir, main = main0, note = note, treestyle = treestyle, nodeplot = nodeplot, whisker = whisker, shade = shade,
+                                    pval = pval, pcut = pcut, language = language, col = col0, palette = palette, ramp = ramp, collapse = collapse,
+                                    pct = pct, quartiles = quartiles, nodehead = nodehead, rootlabel = rootlabel)
   if (treestyle == "boxes") {
     if (!is.null(pcut) && (!is.numeric(pcut) || pcut <= 0 || pcut >= 1)) stop("'pcut' must be a number between 0 and 1")
-    return(.plot_boxes(x, "mchaid", main = main, pval = pval, pcut = pcut, language = language, pct = pct, nodeplot = nodeplot,
-                       whisker = whisker, shade = shade, col = col, palette = palette, cex = cex, nodehead = nodehead, rootlabel = rootlabel))
+    return(page(.plot_boxes(x, "mchaid", main = main, note = note, pval = pval, pcut = pcut, language = language, pct = pct, nodeplot = nodeplot,
+                            whisker = whisker, shade = shade, col = col, palette = palette, cex = cex, nodehead = nodehead, rootlabel = rootlabel)))
   }
   if (!is.null(pcut) && (!is.numeric(pcut) || pcut <= 0 || pcut >= 1)) stop("'pcut' must be a number between 0 and 1")
   if (isTRUE(quartiles)) quartiles <- "auto"
@@ -501,6 +531,9 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
   if (.has_forced(x)) note <- paste0(note, "; \u2020 ", .forced_note(language))
   wl <- .tw(0.12, nchar(lefttxt))
   xs <- max(xs, wl + .tw(0.12, nchar(note)) + 0.9)
+  nun <- length(unote)
+  enote <- .note_room(nun)                                    # room under the legend for the note of the user
+  if (nun) xs <- max(xs, .tw(TR$fz, max(nchar(unote))) + 0.45)
   fl <- TR$fl
   ordr <- x$dvordered && !is.null(quartiles)
   quar <- ordr && nlev >= 5L
@@ -512,7 +545,7 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
   if (ordr) legw <- legw + 0.3 + 0.3 + 0.07 + wmed
   if (quar) legw <- legw + 0.3 + 0.3 + 0.07 + wq
   xs <- max(xs, legw + 0.6)
-  ys <- TR$topm + TR$hbox + D * .tree_dy(pval) + TR$gapbar + TR$barh + TR$botm
+  ys <- TR$topm + TR$hbox + D * .tree_dy(pval) + TR$gapbar + TR$barh + TR$botm + enote
   lang <- tolower(trimws(language))
   if (lang == "po") lang <- "pt"
   g <- .tree_geometry(x, xs, ys, pval, pcut, tx$missing, tx$node, newfmt = TRUE, rootlab = .root_head(rootlabel, lang, x$depvar))
@@ -574,7 +607,7 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
   }
   # legend
   xleg <- (xs - legw) / 2
-  yleg <- 0.55
+  yleg <- 0.55 + enote
   Lg <- NULL
   for (j in seq_len(nlev)) {
     Lg <- rbind(Lg, c(xleg + 0.08, yleg - 0.08, yleg + 0.08, j))
@@ -594,8 +627,9 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
   }
   if (is.null(main)) main <- paste0(tx$title, x$depvar)
   texts[[length(texts) + 1L]] <- list(x = xs / 2, y = ys - 0.33, lab = main, h = TR$ft, adj = 0.5, box = FALSE)
-  texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.17, lab = lefttxt, h = TR$fz, adj = 0, box = FALSE)
-  texts[[length(texts) + 1L]] <- list(x = (wl + 0.3 + xs) / 2, y = 0.17, lab = note, h = TR$fz, adj = 0.5, box = FALSE)
+  texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.17 + enote, lab = lefttxt, h = TR$fz, adj = 0, box = FALSE)
+  texts[[length(texts) + 1L]] <- list(x = (wl + 0.3 + xs) / 2, y = 0.17 + enote, lab = note, h = TR$fz, adj = 0.5, box = FALSE)
+  for (i in seq_len(nun)) texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.12 + (nun - i) * 0.16, lab = unote[i], h = TR$fz, adj = 0, box = FALSE)
   col <- .resp_col(x, col, palette, "en")
 
   # ---- draw
@@ -625,5 +659,5 @@ plot.mchaid <- function(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL, la
                                                    lwd = lw(if (Lm[i, 5] == 0) 2.2 else 1.8), lty = if (Lm[i, 5] == 0) 1 else "44")
   }
   .tree_draw_texts(texts, cexh)
-  invisible(c(width = xs, height = ys))
+  page(c(width = xs, height = ys))
 }

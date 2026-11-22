@@ -2,38 +2,47 @@
 \alias{plot.maid}
 \title{Plot a MAID tree}
 \description{
-Draws the tree as \code{\link[=plot.mchaid]{plot.mchaid}} does (every node is a box with the category of its branch and its
-number of cases; the splitting variable and its test, \code{F=19.7; p<0.001}, go over the branch under the node), with a bar
-in each terminal node that shows the deviation of the mean of the node from the overall mean (the dashed line): blue above
-it, orange below it. The mean and the standard deviation are written under each bar. The last line gives the risk estimate
+Draws the tree as \code{\link[=plot.mchaid]{plot.mchaid}} does: by default (\code{treestyle = "boxes"}) every node is a box with
+the category of its branch as its heading, its size, its mean and standard deviation and a plot of the distribution of the response
+(see \code{nodeplot}); with \code{treestyle = "classic"} every node is a small box with the category of its branch and its number
+of cases, the splitting variable and its test, \code{F=19.7; p<0.001}, go over the branch under the node, and each terminal node has
+a bar that shows the deviation of the mean of the node from the overall mean (the dashed line): blue above it, orange below it, with
+the mean and the standard deviation written under it. The last line of the classic graph gives the risk estimate
 (variance of the response around the mean of its node; in parentheses, the variance around the overall mean) and Eta squared
 (the R-squared of the nodes).
+
+With \code{dir} the same tree is also written as an interactive HTML page (see \code{\link{tree_html}}).
 }
 \usage{
-\method{plot}{maid}(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
-     quartiles = NULL, treestyle = c("classic", "boxes"), nodeplot = NULL,
+\method{plot}{maid}(x, main = NULL, note = NULL, pval = TRUE, pcut = NULL, language = "en",
+     quartiles = NULL, treestyle = c("boxes", "classic"), nodeplot = NULL,
      center = NULL, whisker = c("p5", "minmax", "tukey"), shade = TRUE,
      col = NULL, cex = 1, nodehead = c("category", "number"), rootlabel = "total",
-     digits = 1, maxdots = 200, ...)
+     digits = 1, maxdots = 200, collapse = NULL, dir = NULL, ...)
 }
 \arguments{
   \item{x}{an object returned by \code{\link{maid}}.}
-  \item{main}{title; by default the name of the response variable with a text in the chosen language.}
+  \item{main}{title; by default, in the classic graph, the name of the response variable with a text in the chosen language (the
+    graph of the boxes and the page have no title unless \code{main} is given).}
+  \item{note}{text (source of the data...) written at the bottom left of the graph, under the legend; a new line (\code{"\\n"})
+    starts a new line of the note, and a vector of texts is one line each. It is also in the interactive page written with \code{dir}.}
   \item{pval}{logical: write the p-value of each split.}
   \item{pcut}{if a number between 0 and 1, the p-values smaller than it are written \code{p<}\emph{pcut}.}
   \item{language}{language of the texts: \code{"en"} (default), \code{"es"}, \code{"fr"}, \code{"de"},
     \code{"it"}, \code{"pt"}, \code{"ca"}, \code{"gl"}, \code{"nl"} or \code{"eu"}.}
-  \item{quartiles}{\code{"auto"} (or \code{TRUE}) or \code{"all"}: draw over each bar the median (solid green line)
+  \item{quartiles}{only with \code{treestyle = "classic"} (with the boxes there is a warning, unless it is \code{FALSE}):
+    \code{"auto"} (or \code{TRUE}) or \code{"all"}: draw over each bar the median (solid green line)
     and the quartiles (dashed green lines), at their value on the same scale as the bars. With \code{"auto"}
     only the median is drawn in the nodes where a quartile is too close to it to be told apart.}
-  \item{treestyle}{\code{"classic"} (default), the graph described above, or \code{"boxes"}: every node of the
-    tree, the root and the intermediate nodes included, is a box with its name, its size (n and \% of the cases), its
+  \item{treestyle}{\code{"boxes"} (default) or \code{"classic"}, the two graphs described above. In the boxes every node of the
+    tree, the root and the intermediate nodes included, is a box with its heading, its size (n and \% of the cases), its
     mean (or median, see \code{center}) with, in parentheses, the difference with the overall one, the standard
     deviation and a plot of the distribution of the response (see \code{nodeplot}); under a node that is split go the
     splitting variable and its test (\code{F = 19.7; p < 0.001}) and on each branch the categories. The nodes are
     numbered as in SPSS (the root is node 0, level by level, from left to right), so the numbers of the terminal
     nodes are not those of \code{print} or \code{summary}. The numbers are written with the separators of the
-    language, there is no title unless \code{main} is given, and \code{quartiles} is ignored.}
+    language, there is no title unless \code{main} is given, and \code{quartiles} is ignored. The classic graph was the default until
+    version 0.9.4.}
   \item{nodeplot}{with \code{treestyle = "boxes"}: \code{"bar"}, the deviation of the mean (or median) of the node
     from the overall one as a bar from a line that sticks out of it (dark grey for the overall mean, green for the overall median), on the scale of the largest deviation;
     \code{"box"} (default), a box plot on a scale common to all the nodes (box from the first to the third quartile
@@ -75,6 +84,12 @@ it, orange below it. The mean and the standard deviation are written under each 
   \item{digits}{whole number between 0 and 6 (default 1): decimals of the mean, the median and the standard deviation of the
     nodes, of their differences with the overall one and of the numbers of the legend and the scale (the percentages, the tests
     and the p-values do not change).}
+  \item{collapse}{only with \code{dir}: depth from which the branches of the interactive page start collapsed (the default,
+    \code{NULL}, shows the whole tree). See \code{\link{tree_html}}.}
+  \item{dir}{if given, the graph is drawn and, after it, the same tree is written as an interactive HTML page in this folder, with
+    \code{\link{tree_html}} and the same arguments (\code{cex} does not apply to the page). The path of the page is written and, in an
+    interactive session, the page is opened in the browser. An existing folder is accepted if it is empty or holds a page written by
+    this package (which is replaced); the package \pkg{jsonlite} is needed.}
   \item{...}{not used.}
 }
 \details{
@@ -82,13 +97,16 @@ In a tree grown with \code{forcevars} the variable of every forced split is foll
 graph, in the language of the graph, explains it.
 }
 \value{
-Invisibly, a named vector with the \code{width} and \code{height} in inches of the layout; \code{NULL} if the tree
-has a single node.
+Invisibly, a named vector with the \code{width} and \code{height} in inches of the layout (with \code{dir}, the path of the page is in
+its attribute \code{"html"}); \code{NULL} if the tree has a single node (then no page is written either).
 }
 \examples{
 set.seed(1)
 fit <- maid(mpg ~ cyl + gear + carb, data = mtcars, unordered = "carb", minnode = 5, minsplit = 10)
-plot(fit, quartiles = TRUE)
-plot(fit, treestyle = "boxes", nodeplot = "both", language = "es")
-plot(fit, treestyle = "boxes", nodeplot = "dots")
+plot(fit, treestyle = "classic", quartiles = TRUE)
+plot(fit, nodeplot = "both", language = "es")
+plot(fit, nodeplot = "dots", note = "Source: mtcars (R datasets)")
+## the graph and, after it, the interactive page of the same tree (needs jsonlite)
+if (requireNamespace("jsonlite", quietly = TRUE))
+  plot(fit, dir = file.path(tempdir(), "tree_mtcars"))
 }

@@ -71,7 +71,7 @@ test_that("the forced splits are drawn in every language and style", {
   with_pdf({
     for (lg in c("en", "es", "eu")) {
       expect_error({
-        plot(f2l, language = lg)
+        plot(f2l, treestyle = "classic", language = lg)
         plot(f2l, treestyle = "boxes", language = lg)
         plot(f2l, treestyle = "boxes", nodehead = "number", language = lg)
       }, NA)
@@ -81,7 +81,7 @@ test_that("the forced splits are drawn in every language and style", {
     fmf <- suppressWarnings(maid(mpg ~ cyl + gear + carb + disp + hp, data = mtcars, unordered = "carb", ordered = c("cyl", "gear"),
                                  xtile = c(disp = 3, hp = 3), minnode = 4, minsplit = 8, forcevars = c("gear", "carb")))
     expect_error({
-      plot(fmf)
+      plot(fmf, treestyle = "classic")
       plot(fmf, treestyle = "boxes", nodeplot = "both")
       plot(fit, treestyle = "boxes")   # without forced splits nothing changes
     }, NA)
@@ -95,7 +95,7 @@ test_that("the classic graph draws a + when the device cannot write the dagger",
     expect_type(mchaid:::.dagger_ok(), "logical")
   })
   testthat::local_mocked_bindings(.dagger_ok = function() FALSE)
-  with_pdf(expect_warning(expect_error(plot(f2l), NA), NA))
+  with_pdf(expect_warning(expect_error(plot(f2l, treestyle = "classic"), NA), NA))
 })
 
 test_that("the forced splits reach the data of the interactive tree", {

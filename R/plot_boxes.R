@@ -212,7 +212,7 @@
   choices[i]
 }
 
-.plot_boxes_do <- function(x, kind, main = NULL, pval = TRUE, pcut = NULL, language = "en", pct = TRUE, nodeplot = NULL,
+.plot_boxes_do <- function(x, kind, main = NULL, note = NULL, pval = TRUE, pcut = NULL, language = "en", pct = TRUE, nodeplot = NULL,
                         center = NULL, whisker = "p5", shade = TRUE, col = NULL, palette = "default", cex = 1, nodehead = c("category", "number"),
                         rootlabel = "total", digits = 1, maxdots = 200, sc = 0.8, dry = FALSE) {
   ismaid <- identical(kind, "maid")
@@ -555,14 +555,17 @@
   ttlw <- if (nzchar(ttl)) tw(ft, ttl) else 0
   hasforced <- .has_forced(x)
   fnote <- if (hasforced) paste0("* ", .forced_note(lang)) else ""
-  xs <- max(k * dx + 0.6, legw + 0.6, ltw + 0.6, ttlw + 0.6, if (hasforced) tw(fch, fnote) + 0.6 else 0)
+  unote <- .user_note(note)                                   # note of the user: at the bottom left, under the legend and the note of the forced splits
+  nun <- length(unote)
+  enote <- .note_room(nun)
+  xs <- max(k * dx + 0.6, legw + 0.6, ltw + 0.6, ttlw + 0.6, if (hasforced) tw(fch, fnote) + 0.6 else 0, if (nun) max(tw(fch, unote)) + 0.4 else 0)
   x0 <- (xs - k * dx) / 2
   px_ <- x0 + (xu - 0.5) * dx
   topm <- if (nzchar(ttl)) 0.35 + 0.25 * cex else 0.15
   if (headcat) topm <- topm + 0.12                               # the square with the number sticks out of the root
   yleg0 <- if (!ismaid && !isbox) 0.28 else if (isbar) 0.28 else if (ismaid) 0.82 else 0.62
   mg0 <- (if (ismaid) (if (isbar) 0.95 else 1.6) else (if (isbox) 1.4 else 1.05)) - (yleg0 + 0.33 + 0.094)
-  ynote <- if (hasforced) 0.2 * cex else 0                     # room for the line with the note of the forced variables
+  ynote <- (if (hasforced) 0.2 * cex else 0) + enote                     # room for the line with the note of the forced variables
   yax <- (if (ismaid) 0.14 + 0.36 * cex else 0.13 + 0.17 * cex) + ynote          # axis of the scale of the box plots
   yleg <- (if ((!ismaid && !isbox) || isbar) 0.12 + 0.16 * cex else yax - ynote + 0.2 + 0.12 * cex) + ynote
   botm <- yleg + (nlr - 1L) * rh + (0.33 + 0.094 + mg0) * cex
@@ -590,7 +593,7 @@
   addP <- function(xx, yy) Pt <<- rbind(Pt, cbind(xx, yy))
   addE <- function(m) E <<- rbind(E, m)
   addR <- function(x1, x2, y, h, kd) Rc <<- rbind(Rc, c(x1, x2, y, h, kd))
-  addT <- function(y, xx, kd, lab, h, bold = FALSE, colr = "black", adj = 0.5) Tt[[length(Tt) + 1L]] <<- list(y = y, x = xx, kind = kd, lab = lab, h = h, bold = bold, col = colr)
+  addT <- function(y, xx, kd, lab, h, bold = FALSE, colr = "black", adj = 0.5) Tt[[length(Tt) + 1L]] <<- list(y = y, x = xx, kind = kd, lab = lab, h = h, bold = bold, col = colr, adj = adj)
   for (u in seq_len(nt)) {
     d <- dep[u]
     px <- px_[u]
@@ -722,7 +725,8 @@
     }
   }
   if (nzchar(ttl)) addT(ys - 0.3, xs / 2, "t", ttl, ft)
-  if (hasforced) addT(0.1 * cex + 0.02, xs / 2, "t", fnote, fch)
+  if (hasforced) addT(0.1 * cex + 0.02 + enote, xs / 2, "t", fnote, fch)
+  for (i in seq_len(nun)) addT(0.12 + (nun - i) * 0.16, 0.15, "t", unote[i], fch, adj = 0)
 
   # ---- draw
   cv_ <- .tree_canvas(xs, ys, new = FALSE, cex = cex_txt)
@@ -759,6 +763,6 @@
   ln(E[E[, 5] == 6, , drop = FALSE], cb[5], 1.3)
   ln(E[E[, 5] == 7, , drop = FALSE], co[5], 1.3)
   if (nrow(Pt)) graphics::points(Pt[, 1L], Pt[, 2L], pch = 16, cex = cexh(0.085), col = grDevices::adjustcolor("grey25", 0.6))
-  for (t in Tt) graphics::text(t$x, t$y, t$lab, cex = cexh(t$h), font = if (t$bold) 2L else 1L, col = t$col)
+  for (t in Tt) graphics::text(t$x, t$y, t$lab, cex = cexh(t$h), font = if (t$bold) 2L else 1L, col = t$col, adj = c(t$adj, 0.5))
   invisible(c(width = xs, height = ys))
 }

@@ -7,6 +7,7 @@
 Writes a folder with a self-contained HTML page (\code{index.html}, the scripts and the data) that shows the tree of an
 object returned by \code{\link{mchaid}} or \code{\link{maid}} with the same boxes as \code{plot(x, treestyle = "boxes")}, or in
 the layout of the classic graph (\code{treestyle = "classic"}), but interactive. Open the page in any browser; no server is needed.
+The same page is written by \code{plot(x, dir = )} (see \code{\link{plot.mchaid}}), which draws the static graph first.
 }
 \usage{
 tree_html(x, main = NULL, note = NULL, treestyle = c("boxes", "classic"),

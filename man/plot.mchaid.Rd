@@ -2,30 +2,39 @@
 \alias{plot.mchaid}
 \title{Plot a CHAID tree}
 \description{
-Draws the tree. Every node is a box with the category (or group of categories, with the value label if the variable has one)
-of the branch that leads to it, as its heading, and its number of cases (the root says "Total"). Over the branch under a node that is
-split go the splitting variable and, under it, the likelihood-ratio chi-square and the Bonferroni-adjusted p-value of the split
-(\code{chi2=434; p<0.001}). Each terminal node has at the bottom a stacked bar with the distribution (\%) of the response
-variable (the modal category is marked with an asterisk). The last line gives the risk estimate (proportion misclassified when every case is assigned
-the modal category of its node; the same for the root node in parentheses) and Cramer's V.
+Draws the tree. By default (\code{treestyle = "boxes"}) every node is a box with the category (or group of categories, with the
+value label if the variable has one) of the branch that leads to it as its heading (the root says "Total"), its size and a plot of the
+distribution of the response variable; the number of the node is in a small square over the box (dark if the node is terminal), and
+under a node that is split go the splitting variable and its likelihood-ratio chi-square and Bonferroni-adjusted p-value
+(\code{chi2 = 434; p < 0.001}). With \code{treestyle = "classic"} the nodes are small boxes with the category and the number of cases,
+the test goes over the branch (\code{chi2=434; p<0.001}), only each terminal node has at the bottom a stacked bar with the distribution
+(\%) of the response variable (the modal category is marked with an asterisk) and the last line gives the risk estimate (proportion
+misclassified when every case is assigned the modal category of its node; the same for the root node in parentheses) and Cramer's V.
+
+With \code{dir} the same tree is also written as an interactive HTML page (see \code{\link{tree_html}}).
 }
 \usage{
-\method{plot}{mchaid}(x, main = NULL, pct = TRUE, pval = TRUE, pcut = NULL,
+\method{plot}{mchaid}(x, main = NULL, note = NULL, pct = TRUE, pval = TRUE, pcut = NULL,
      language = "en", quartiles = NULL, col = NULL, palette = "default", ramp = FALSE,
-     treestyle = c("classic", "boxes"), nodeplot = NULL,
+     treestyle = c("boxes", "classic"), nodeplot = NULL,
      whisker = c("p5", "minmax", "tukey"), shade = TRUE, cex = 1,
-     nodehead = c("category", "number"), rootlabel = "total", ...)
+     nodehead = c("category", "number"), rootlabel = "total",
+     collapse = NULL, dir = NULL, ...)
 }
 \arguments{
   \item{x}{an object returned by \code{\link{mchaid}}.}
-  \item{main}{title; by default the name of the response variable with a text in the chosen language.}
+  \item{main}{title; by default, in the classic graph, the name of the response variable with a text in the chosen language (the
+    graph of the boxes and the page have no title unless \code{main} is given).}
+  \item{note}{text (source of the data...) written at the bottom left of the graph, under the legend; a new line (\code{"\\n"})
+    starts a new line of the note, and a vector of texts is one line each. It is also in the interactive page written with \code{dir}.}
   \item{pct}{logical: write the percentages inside the bars.}
   \item{pval}{logical: write the p-value of each split.}
   \item{pcut}{if a number between 0 and 1, the p-values smaller than it are written
     \code{p<}\emph{pcut}.}
   \item{language}{language of the texts of the graph: \code{"en"} (default), \code{"es"}, \code{"fr"},
     \code{"de"}, \code{"it"}, \code{"pt"}, \code{"ca"}, \code{"gl"}, \code{"nl"} or \code{"eu"}.}
-  \item{quartiles}{with an ordered response, \code{"auto"} (or \code{TRUE}) or \code{"all"}: draw the
+  \item{quartiles}{only with \code{treestyle = "classic"} (with the boxes there is a warning, unless it is \code{FALSE}) and an ordered response,
+    \code{"auto"} (or \code{TRUE}) or \code{"all"}: draw the
     median and the quartiles (see Details). With \code{"auto"} only the median is drawn in the nodes
     where a quartile is too close to it to be told apart; with \code{"all"} all of them are always
     drawn.}
@@ -46,14 +55,14 @@ the modal category of its node; the same for the root node in parentheses) and C
     \code{"grey"} (greys from light to dark, to print in black and white), \code{"blues"}, or any name of
     \code{grDevices::palette.pals()} (e.g. \code{"Set 2"}, \code{"R4"}; it must have as many colours as categories) or of
     \code{grDevices::hcl.pals()} (e.g. \code{"Dark 3"}, \code{"Zissou 1"}); case does not matter.}
-  \item{treestyle}{\code{"classic"} (default), the graph described above, or \code{"boxes"}: every node of the
-    tree, the root and the intermediate nodes included, is a box with its name, its size (n and \% of the cases)
+  \item{treestyle}{\code{"boxes"} (default) or \code{"classic"}, the two graphs described above. In the boxes every node of the
+    tree, the root and the intermediate nodes included, is a box with its heading, its size (n and \% of the cases)
     and a plot of the distribution of the response variable; under a node that is split go the splitting variable
     and its test (\code{chi2 = 434; p < 0.001}), on each branch the categories, and under each terminal node the
     predicted (modal) category. The nodes are numbered as in SPSS (the root is node 0, level by level, from left to
     right), so the numbers of the terminal nodes are not those of \code{print} or \code{summary}. The numbers are
     written with the separators of the language, there is no title unless \code{main} is given, and
-    \code{quartiles} is ignored.}
+    \code{quartiles} is ignored. The classic graph was the default until version 0.9.4.}
   \item{nodeplot}{with \code{treestyle = "boxes"}: \code{"bar"} (default), the stacked bar of the percentages of the
     categories; \code{"box"}, only with an ordered response, a box plot on the scale of the categories (category
     j occupies the band from j - 1 to j and the percentiles are interpolated inside the category where the
@@ -77,6 +86,12 @@ the modal category of its node; the same for the root node in parentheses) and C
     "Node N" with the labels on the branches (the heading of a terminal node is dark, with the text in white).}
   \item{rootlabel}{the heading of the root node (in the boxes style, only with \code{nodehead = "category"}): \code{"total"}
     (default; "Total", translated), \code{"depvar"} (the name of the response variable) or any text.}
+  \item{collapse}{only with \code{dir}: depth from which the branches of the interactive page start collapsed (the default,
+    \code{NULL}, shows the whole tree). See \code{\link{tree_html}}.}
+  \item{dir}{if given, the graph is drawn and, after it, the same tree is written as an interactive HTML page in this folder, with
+    \code{\link{tree_html}} and the same arguments (\code{cex} does not apply to the page). The path of the page is written and, in an
+    interactive session, the page is opened in the browser. An existing folder is accepted if it is empty or holds a page written by
+    this package (which is replaced); the package \pkg{jsonlite} is needed.}
   \item{...}{not used.}
 }
 \details{
@@ -97,15 +112,19 @@ categories, and the percentile is interpolated within the category where the cum
 reaches 25, 50 or 75), so the lines can be compared between nodes.
 }
 \value{
-Invisibly, a named vector with the \code{width} and \code{height} in inches of the layout; \code{NULL}
-if the tree has a single node.
+Invisibly, a named vector with the \code{width} and \code{height} in inches of the layout (with \code{dir}, the path of the page is in
+its attribute \code{"html"}); \code{NULL} if the tree has a single node (then no page is written either).
 }
 \examples{
 tt <- as.data.frame(Titanic)
 fit <- mchaid(Survived ~ Class + Sex + Age, tt, weights = Freq, minnode = 30, minsplit = 60)
 plot(fit, language = "es")
-plot(fit, treestyle = "boxes", language = "es")
+plot(fit, treestyle = "classic", language = "es")
+plot(fit, note = "Source: Titanic (R datasets)")
 size <- plot(fit)
+## the graph and, after it, the interactive page of the same tree (needs jsonlite)
+if (requireNamespace("jsonlite", quietly = TRUE))
+  plot(fit, dir = file.path(tempdir(), "tree_titanic"), note = "Source: Titanic (R datasets)")
 ## colours by the name of the category, in the order of the categories, a palette
 ## and shades of one colour
 plot(fit, treestyle = "boxes", col = c(Yes = "forestgreen", No = "firebrick"))

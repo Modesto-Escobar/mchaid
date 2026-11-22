@@ -39,17 +39,20 @@
   as.list(L[[code]])
 }
 
-plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en", quartiles = NULL,
-                      treestyle = c("classic", "boxes"), nodeplot = NULL, center = NULL, whisker = c("p5", "minmax", "tukey"),
-                      shade = TRUE, col = NULL, cex = 1, nodehead = c("category", "number"), rootlabel = "total", digits = 1, maxdots = 200, ...) {
-  treestyle <- .match_opt(treestyle, c("classic", "boxes"), "treestyle")
+plot.maid <- function(x, main = NULL, note = NULL, pval = TRUE, pcut = NULL, language = "en", quartiles = NULL,
+                      treestyle = c("boxes", "classic"), nodeplot = NULL, center = NULL, whisker = c("p5", "minmax", "tukey"),
+                      shade = TRUE, col = NULL, cex = 1, nodehead = c("category", "number"), rootlabel = "total", digits = 1, maxdots = 200,
+                      collapse = NULL, dir = NULL, ...) {
+  treestyle <- .match_opt(treestyle, c("boxes", "classic"), "treestyle")
   digits <- .check_digits(digits)
   if (treestyle == "classic") {                               # arguments of the style of boxes that the classic style ignores
     ign <- c(if (!is.null(nodeplot)) "nodeplot", if (!is.null(center)) "center", if (!missing(nodehead)) "nodehead",
              if (!missing(whisker)) "whisker", if (!missing(maxdots)) "maxdots")
     if (length(ign)) warning(paste(sQuote(ign, FALSE), collapse = ", "), if (length(ign) > 1L) " are" else " is", " ignored with treestyle = \"classic\": use treestyle = \"boxes\"", call. = FALSE)
-  }
+  } else if (!is.null(quartiles) && !isFALSE(quartiles)) warning("'quartiles' is ignored with treestyle = \"boxes\": use treestyle = \"classic\"", call. = FALSE)
   whisker <- .match_opt(whisker, c("p5", "minmax", "tukey"), "whisker")
+  unote <- .user_note(note)
+  main0 <- main                                               # the classic graph gives the title a default that the page does not take
   mc <- .maid_col(col)
   if (!is.numeric(cex) || length(cex) != 1L || is.na(cex) || cex < 0.5 || cex > 3) stop("'cex' must be a number between 0.5 and 3")
   k <- x$N_clusters
@@ -57,10 +60,13 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
     message("No splits uncovered: there is no tree to draw.")
     return(invisible(NULL))
   }
+  page <- function(size) .plot_page(size, x, dir, main = main0, note = note, treestyle = treestyle, nodeplot = nodeplot, center = center, whisker = whisker,
+                                    shade = shade, pval = pval, pcut = pcut, language = language, col = col, collapse = collapse, quartiles = quartiles,
+                                    nodehead = nodehead, rootlabel = rootlabel, digits = digits, maxdots = maxdots)
   if (treestyle == "boxes") {
     if (!is.null(pcut) && (!is.numeric(pcut) || pcut <= 0 || pcut >= 1)) stop("'pcut' must be a number between 0 and 1")
-    return(.plot_boxes(x, "maid", main = main, pval = pval, pcut = pcut, language = language, nodeplot = nodeplot, center = center,
-                       whisker = whisker, shade = shade, col = mc, cex = cex, nodehead = nodehead, rootlabel = rootlabel, digits = digits, maxdots = maxdots))
+    return(page(.plot_boxes(x, "maid", main = main, note = note, pval = pval, pcut = pcut, language = language, nodeplot = nodeplot, center = center,
+                            whisker = whisker, shade = shade, col = mc, cex = cex, nodehead = nodehead, rootlabel = rootlabel, digits = digits, maxdots = maxdots)))
   }
   if (!is.null(pcut) && (!is.numeric(pcut) || pcut <= 0 || pcut >= 1)) stop("'pcut' must be a number between 0 and 1")
   if (isTRUE(quartiles)) quartiles <- "auto"
@@ -84,6 +90,9 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
   if (.has_forced(x)) note <- paste0(note, "; * ", .forced_note(language))
   wl <- .tw(0.12, nchar(lefttxt))
   xs <- max(xs, wl + .tw(0.12, nchar(note)) + 0.9)
+  nun <- length(unote)
+  enote <- .note_room(nun)                                    # room under the legend for the note of the user
+  if (nun) xs <- max(xs, .tw(TR$fz, max(nchar(unote))) + 0.45)
   gtxt <- paste0(tx$overall, " = ", .fmtd(gm, digits))
   wmed <- .tw(fl, nchar(tx$median))
   wq <- .tw(fl, 6)
@@ -91,7 +100,7 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
   if (quar) legw <- legw + 2 * (0.3 + 0.3 + 0.07) + wmed + wq
   xs <- max(xs, legw + 0.6)
   labh <- 0.42
-  ys <- TR$topm + TR$hbox + D * .tree_dy(pval) + TR$gapbar + TR$barh + labh + TR$botm
+  ys <- TR$topm + TR$hbox + D * .tree_dy(pval) + TR$gapbar + TR$barh + labh + TR$botm + enote
   lang <- tolower(trimws(language))
   if (lang == "po") lang <- "pt"
   g <- .tree_geometry(x, xs, ys, pval, pcut, tx$missing, tx$node, newfmt = TRUE, rootlab = .root_head(rootlabel, lang, x$depvar))
@@ -128,7 +137,7 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
   }
   M <- rbind(M, c(ybase, min(g$xl) - TR$dx / 2, ybase, max(g$xl) + TR$dx / 2, 1))      # the overall mean, across the bars
   # legend: the dashed line is the overall mean
-  yleg <- 0.55
+  yleg <- 0.55 + enote
   xleg <- (xs - legw) / 2
   Lm <- rbind(c(xleg, yleg, xleg + 0.3, yleg, 1))
   texts[[length(texts) + 1L]] <- list(x = xleg + 0.3 + 0.07 + .tw(fl, nchar(gtxt)) / 2, y = yleg, lab = gtxt, h = fl, adj = 0.5, box = FALSE)
@@ -142,8 +151,9 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
   }
   if (is.null(main)) main <- paste0(tx$title, x$depvar)
   texts[[length(texts) + 1L]] <- list(x = xs / 2, y = ys - 0.33, lab = main, h = TR$ft, adj = 0.5, box = FALSE)
-  texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.17, lab = lefttxt, h = TR$fz, adj = 0, box = FALSE)
-  texts[[length(texts) + 1L]] <- list(x = (wl + 0.3 + xs) / 2, y = 0.17, lab = note, h = TR$fz, adj = 0.5, box = FALSE)
+  texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.17 + enote, lab = lefttxt, h = TR$fz, adj = 0, box = FALSE)
+  texts[[length(texts) + 1L]] <- list(x = (wl + 0.3 + xs) / 2, y = 0.17 + enote, lab = note, h = TR$fz, adj = 0.5, box = FALSE)
+  for (i in seq_len(nun)) texts[[length(texts) + 1L]] <- list(x = 0.15, y = 0.12 + (nun - i) * 0.16, lab = unote[i], h = TR$fz, adj = 0, box = FALSE)
 
   # ---- draw
   cv_ <- .tree_canvas(xs, ys, cex = cex)
@@ -164,5 +174,5 @@ plot.maid <- function(x, main = NULL, pval = TRUE, pcut = NULL, language = "en",
                        lwd = lw(if (t == 1) 0.9 else 2), lty = if (t == 2) 1 else if (t == 1) 2 else "44")
   }
   .tree_draw_texts(texts, cv_$cexh)
-  invisible(c(width = xs, height = ys))
+  page(c(width = xs, height = ys))
 }
