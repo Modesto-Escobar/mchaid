@@ -196,6 +196,6 @@
 
 # mchaid 0.1.0
 
-* First version: port to R of the Stata commands `mchaid` (version 2.3, categorical response) and `maid`
+* First version: port to R of the Stata commands `mchaid` (version 1.0.0, categorical response) and `maid`
   (quantitative response), with `print`, `summary`, `plot`, `predict`, `classification`, `importance` and
   `asnetCoin`.

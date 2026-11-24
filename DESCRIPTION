@@ -3,7 +3,9 @@ Type: Package
 Title: Chi-Square and F Automatic Interaction Detection (CHAID, AID) Trees
 Version: 0.9.5
 Date: 2026-11-22
-Authors@R: person("Modesto", "Escobar", email = "modesto@usal.es", role = c("aut", "cre"))
+Authors@R: c(person("Modesto", "Escobar", email = "modesto@usal.es", role = c("aut", "cre")),
+    person("MICIU/AEI", role = "fnd",
+    comment = "Grants CSO2013-49278-EXP, PGC2018-093755-B-I00, PDC2022-133355-I00, PID2023-147358NB-I00 funded by MICIU/AEI/10.13039/501100011033 and by European Union NextGenerationEU/PRTR"))
 Description: Grows CHAID decision trees (Kass, 1980) for a categorical or
     ordinal response, and the equivalent trees with F tests for a
     quantitative response, with ordered and unordered categorical predictors,

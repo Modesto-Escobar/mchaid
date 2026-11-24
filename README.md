@@ -4,7 +4,7 @@
 
 CHAID and AID decision trees for R: Chi-square Automatic Interaction Detection (Kass, 1980) for a categorical or
 ordinal response and, with F tests, for a quantitative one. `mchaid` is a port to R of the Stata commands
-`mchaid` (version 2.3, categorical response) and `maid` (quantitative response), which are based on the Stata
+`mchaid` (version 1.0.0, categorical response) and `maid` (quantitative response), which are based on the Stata
 command `chaid` by Joseph N. Luchman. It uses only packages distributed with R (`stats`, `graphics`,
 `grDevices`, `utils`); `jsonlite` is needed only for the interactive page of `tree_html()`.
 
@@ -114,6 +114,11 @@ it follows. The interactive page includes a subset of D3 v5.16.0 (BSD 3-Clause) 
 (Apache License 2.0); see `inst/www/NOTICE.md`.
 
 Released under the GNU General Public License, version 3 (see `LICENSE.md`).
+
+## Acknowledgements
+
+Grants CSO2013-49278-EXP, PGC2018-093755-B-I00, PDC2022-133355-I00, PID2023-147358NB-I00 funded by
+MICIU/AEI/10.13039/501100011033 and by "European Union NextGenerationEU/PRTR".
 
 ## News
 

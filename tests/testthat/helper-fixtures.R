@@ -1,4 +1,4 @@
-# Objects shared by the tests. The reference values come from the Stata commands mchaid (version 2.3)
+# Objects shared by the tests. The reference values come from the Stata commands mchaid (version 1.0.0)
 # and maid, run on the same data (the Titanic table with frequency weights, and mtcars).
 
 ## the Titanic table: a categorical response, frequency weights
